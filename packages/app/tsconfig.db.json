@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDirs": ["db"]
+  },
+  "include": ["db/**/*.ts"]
+}

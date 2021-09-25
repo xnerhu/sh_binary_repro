@@ -1,0 +1,74 @@
+load("@npm//@bazel/typescript:index.bzl", "ts_config", "ts_project")
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+ts_config(
+    name = "tsconfig_app",
+    src = "tsconfig.app.json",
+    deps = [
+        "//:tsconfig.json",
+    ],
+)
+
+ts_config(
+    name = "tsconfig_db",
+    src = "tsconfig.db.json",
+    deps = [
+        "//:tsconfig.json",
+    ],
+)
+
+DEPS = [
+    "@npm//@types/node",
+]
+
+ts_project(
+    name = "components",
+    srcs = glob(["src/**/*.ts"]),
+    composite = True,
+    declaration = True,
+    incremental = True,
+    source_map = True,
+    tsconfig = ":tsconfig_app",
+    deps = DEPS,
+)
+
+ts_project(
+    name = "components_db",
+    srcs = glob(
+        ["db/**/*.ts"],
+    ),
+    composite = True,
+    declaration = True,
+    incremental = True,
+    source_map = True,
+    tsconfig = ":tsconfig_db",
+    deps = DEPS + [":components"],
+)
+
+nodejs_binary(
+    name = "app",
+    data = [
+        ":components",
+    ],
+    entry_point = "src/index.ts",
+)
+
+nodejs_binary(
+    name = "seed",
+    data = [
+        ":components_db",
+    ],
+    entry_point = "db/seed.ts",
+)
+
+sh_binary(
+    name = "run_seed",
+    srcs = ["run_seed.sh"],
+    args = ["$(location :seed)"],
+    data = [
+        ":seed",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)
